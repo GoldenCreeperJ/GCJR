@@ -3,7 +3,7 @@ import sys
 import random
 
 
-class Snake_Starting:
+class SnakeStarting:
     def __init__(self, owner):
         # 开始页面
         self.owner = owner
@@ -12,14 +12,14 @@ class Snake_Starting:
                           [self.owner.font45.render('开始', True, 'white')]]
         if self.owner.score == self.owner.width * self.owner.length:
             self.font_list[0] = [self.owner.font45.render('满分', True, 'white')]
-        for i in range(2):
+        for i in range(len(self.font_list)):
             j = self.font_list[i][0].get_rect()
             self.font_list[i].append(j)
         self.draw()
 
     def draw(self):
         # 绘制
-        for i in range(2):
+        for i in range(len(self.font_list)):
             self.font_list[i][1].center = [int(self.owner.screen_rect[0] * 0.5),
                                            int(self.owner.screen_rect[1] * (0.3 + 0.2 * i))]
             self.owner.screen.blit(self.font_list[i][0], self.font_list[i][1])
@@ -39,7 +39,7 @@ class Snake_Starting:
         self.draw()
 
 
-class Snake_Gaming:
+class SnakeGaming:
     # 游戏页面
     def __init__(self, owner):
         self.owner = owner
@@ -53,7 +53,7 @@ class Snake_Gaming:
         self.vector = (1, 0)
         self.in_pause = False
         self.grow = False
-        self.real_speed = self.owner.start_speed if self.owner.speed_change else self.owner.end_speed
+        self.real_period = self.owner.start_period
         self.__update_apple()
 
     def __update_apple(self):
@@ -65,7 +65,11 @@ class Snake_Gaming:
 
     def __update_snake(self):
         # 生成蛇
-        self.head_place = tuple(map(lambda x, y: x + y, self.head_place, self.vector))
+        if self.owner.physical_walls:
+            self.head_place = tuple(map(lambda x, y: x + y, self.head_place, self.vector))
+        else:
+            self.head_place = tuple(
+                map(lambda x, y, z: (x + y) % z, self.head_place, self.vector, self.owner.board_rect))
         self.body_list.append(self.head_place)
         if self.grow:
             self.grow = False
@@ -80,15 +84,18 @@ class Snake_Gaming:
             self.grow = True
             self.__update_apple()
             self.owner.score += 1
-            if self.owner.speed_change:
-                self.real_speed = (self.owner.speed_rate * self.owner.start_speed) // (
-                            self.owner.score + self.owner.speed_rate)
+            if self.owner.period_change:
+                self.real_period = (self.owner.period_rate * self.owner.start_period) // (
+                        self.owner.score + self.owner.period_rate)
 
     def death_test(self):
         # 检测是否死亡
-        return (self.head_place in self.body_list[:-1] and len(self.body_list) != 1) or (
-            not 0 <= self.head_place[0] <= self.owner.length - 1) or (
-            not 0 <= self.head_place[1] <= self.owner.width - 1)
+        if self.owner.physical_walls:
+            return (self.head_place in self.body_list[:-1] and len(self.body_list) != 1) or (
+                not 0 <= self.head_place[0] <= self.owner.length - 1) or (
+                not 0 <= self.head_place[1] <= self.owner.width - 1)
+        else:
+            return self.head_place in self.body_list[:-1] and len(self.body_list) != 1
 
     def moving_function(self, event):
         # 移动
@@ -120,10 +127,10 @@ class Snake_Gaming:
         pygame.draw.rect(self.owner.screen, 'red', self.apple_pos + (self.owner.depth, self.owner.depth))
         pygame.draw.rect(self.owner.screen, 'black', self.tail_pos + (self.owner.depth, self.owner.depth))
         pygame.draw.rect(self.owner.screen, 'green', self.head_pos + (self.owner.depth, self.owner.depth))
-        pygame.time.wait(self.real_speed)
+        pygame.time.wait(self.real_period)
 
 
-class Snake_Setting:
+class SnakeSetting:
     # 设置页面
     def __init__(self, owner):
         self.owner = owner
@@ -135,16 +142,18 @@ class Snake_Setting:
                           [self.owner.font45.render('宽度', True, 'white')],
                           [self.owner.font45.render(str(self.owner.width), True, 'white')],
                           [self.owner.font45.render('变速', True, 'white')],
-                          [self.owner.font45.render(str(self.owner.speed_change), True, 'white')],
-                          [self.owner.font45.render('最快', True, 'white')],
-                          [self.owner.font45.render(str(self.owner.end_speed), True, 'white')],
-                          [self.owner.font45.render('加速', True, 'white')],
-                          [self.owner.font45.render(str(self.owner.speed_rate), True, 'white')],
-                          [self.owner.font45.render('初始', True, 'white')],
-                          [self.owner.font45.render(str(self.owner.start_speed), True, 'white')], ]
-        for i in range(14):
+                          [self.owner.font45.render(str(self.owner.period_change), True, 'white')],
+                          [self.owner.font45.render('最快周期', True, 'white')],
+                          [self.owner.font45.render(str(self.owner.end_period), True, 'white')],
+                          [self.owner.font45.render('加速周期', True, 'white')],
+                          [self.owner.font45.render(str(self.owner.period_rate), True, 'white')],
+                          [self.owner.font45.render('初始周期', True, 'white')],
+                          [self.owner.font45.render(str(self.owner.start_period), True, 'white')],
+                          [self.owner.font45.render('实体墙', True, 'white')],
+                          [self.owner.font45.render(str(self.owner.physical_walls), True, 'white')]]
+        for i in range(len(self.font_list)):
             j = self.font_list[i][0].get_rect()
-            j.topleft = [20 + 100 * (i % 2), 25 + 50 * (i // 2)]
+            j.topleft = [20 + 200 * (i % 2), 25 + 50 * (i // 2)]
             self.font_list[i].append(j)
         self.draw()
 
@@ -192,12 +201,54 @@ class Snake_Setting:
                     self.owner.width = self.owner.max_rect[1]
                 self.font_list[5][0] = self.owner.font45.render(str(self.owner.width), True, 'white')
 
+        elif self.in_modify == 7:
+            self.owner.period_change = not self.owner.period_change
+            self.owner.end_period = self.owner.start_period
+            self.font_list[7][0] = self.owner.font45.render(str(self.owner.period_change), True, 'white')
+            self.font_list[9][0] = self.owner.font45.render(str(self.owner.end_period), True, 'white')
+
         elif self.in_modify == 9:
-            pass
+            if self.owner.letter and 0 < int(self.owner.letter):
+                if self.owner.period_change:
+                    if int(self.owner.letter) > self.owner.start_period:
+                        self.owner.end_period = self.owner.start_period - 1
+                    elif int(self.owner.letter) < self.owner.start_period:
+                        self.owner.end_period = int(self.owner.letter)
+                    else:
+                        self.owner.period_change = False
+                        self.owner.end_period = self.owner.start_period
+                        self.font_list[7][0] = self.owner.font45.render(str(self.owner.period_change), True, 'white')
+                        self.font_list[13][0] = self.owner.font45.render(str(self.owner.start_period), True, 'white')
+                else:
+                    self.owner.start_period = self.owner.end_period = int(self.owner.letter)
+                    self.font_list[13][0] = self.owner.font45.render(str(self.owner.start_period), True, 'white')
+            self.font_list[9][0] = self.owner.font45.render(str(self.owner.end_period), True, 'white')
+
         elif self.in_modify == 11:
-            pass
+            if self.owner.letter and 0 < int(self.owner.letter):
+                self.owner.period_rate = int(self.owner.letter)
+            self.font_list[11][0] = self.owner.font45.render(str(self.owner.period_rate), True, 'white')
+
         elif self.in_modify == 13:
-            pass
+            if self.owner.letter and 0 < int(self.owner.letter):
+                if self.owner.period_change:
+                    if int(self.owner.letter) < self.owner.end_period:
+                        self.owner.start_period = self.owner.end_period + 1
+                    elif int(self.owner.letter) > self.owner.end_period:
+                        self.owner.start_period = int(self.owner.letter)
+                    else:
+                        self.owner.period_change = False
+                        self.owner.start_period = self.owner.end_period
+                        self.font_list[7][0] = self.owner.font45.render(str(self.owner.period_change), True, 'white')
+                        self.font_list[9][0] = self.owner.font45.render(str(self.owner.end_period), True, 'white')
+                else:
+                    self.owner.start_period = self.owner.end_period = int(self.owner.letter)
+                    self.font_list[9][0] = self.owner.font45.render(str(self.owner.end_period), True, 'white')
+            self.font_list[13][0] = self.owner.font45.render(str(self.owner.start_period), True, 'white')
+
+        elif self.in_modify == 15:
+            self.owner.physical_walls = not self.owner.physical_walls
+            self.font_list[15][0] = self.owner.font45.render(str(self.owner.physical_walls), True, 'white')
 
         self.draw()
         self.in_modify = -1
@@ -220,7 +271,7 @@ class Snake_Setting:
         self.draw()
 
 
-class Snake_Main:
+class SnakeMain:
     def __init__(self, screen=pygame.display.set_mode((800, 600), flags=pygame.RESIZABLE)):
         # 初始化
         pygame.init()
@@ -235,8 +286,9 @@ class Snake_Main:
 
         self.state_list = ('starting', 'gaming', 'setting')
         self.state = self.state_list[0]
+        self.physical_walls = True
         self.depth, self.length, self.width, self.score = 20, 40, 30, 0
-        self.start_speed, self.end_speed, self.speed_rate, self.speed_change = 100, 30, 10, True
+        self.start_period, self.end_period, self.period_rate, self.period_change = 100, 30, 10, True
         self.max_rect = (self.length, self.width)
         self.board_rect = (self.length, self.width)  # 不合并，浅拷贝
         self.grid_rect = tuple(map(lambda x: x * self.depth, self.board_rect))
@@ -250,11 +302,11 @@ class Snake_Main:
 
     def loop(self):
         # 主循环
-        starting_page = Snake_Starting(self)
+        starting_page = SnakeStarting(self)
         running = True
         while running:
 
-            self.clock.tick(self.end_speed)
+            self.clock.tick(self.end_period)
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     running = False
@@ -273,12 +325,12 @@ class Snake_Main:
                     if event.type == pygame.MOUSEBUTTONUP:
                         if pygame.Rect.collidepoint(starting_page.font_list[1][1], event.pos):
                             self.state = self.state_list[1]
-                            gaming_page = Snake_Gaming(self)
+                            gaming_page = SnakeGaming(self)
                             del starting_page
                     elif event.type == pygame.KEYDOWN:
                         if event.key == pygame.K_ESCAPE:
                             self.state = self.state_list[2]
-                            setting_page = Snake_Setting(self)
+                            setting_page = SnakeSetting(self)
                             del starting_page
 
                 elif self.state == self.state_list[1]:
@@ -287,7 +339,7 @@ class Snake_Main:
                             gaming_page.moving_function(event)
                         if event.key == pygame.K_ESCAPE:
                             self.state = self.state_list[2]
-                            setting_page = Snake_Setting(self)
+                            setting_page = SnakeSetting(self)
                             del gaming_page
                         elif event.key == pygame.K_SPACE:
                             gaming_page.in_pause = not gaming_page.in_pause
@@ -302,40 +354,42 @@ class Snake_Main:
                                 setting_page.in_modify = i
                                 self.letter = ''
                                 break
-                        if setting_page.in_modify == 7:
-                            self.speed_change = not self.speed_change
-                            setting_page.in_modify = -1
+                        if setting_page.in_modify in (7, 15):
+                            setting_page.return_function()
 
                     elif event.type == pygame.KEYDOWN:
-                        if event.key == pygame.K_RETURN:
-                            setting_page.return_function()
-                        elif event.key == pygame.K_BACKSPACE:
-                            self.letter = self.letter[:-1]
-                            setting_page.font_list[setting_page.in_modify][0] = self.font45.render(self.letter, True,
-                                                                                                   'white')
-                            setting_page.draw()
-                        elif setting_page.in_modify and '0' <= event.unicode <= '9':
-                            self.letter += event.unicode
-                            setting_page.font_list[setting_page.in_modify][0] = self.font45.render(self.letter, True,
-                                                                                                   'white')
-                            setting_page.draw()
-                        elif event.key == pygame.K_ESCAPE:
+                        if setting_page.in_modify != -1:
+                            if event.key == pygame.K_RETURN:
+                                setting_page.return_function()
+                            elif event.key == pygame.K_BACKSPACE:
+                                self.letter = self.letter[:-1]
+                                setting_page.font_list[setting_page.in_modify][0] = self.font45.render(self.letter,
+                                                                                                       True,
+                                                                                                       'white')
+                                setting_page.draw()
+                            elif setting_page.in_modify and '0' <= event.unicode <= '9':
+                                self.letter += event.unicode
+                                setting_page.font_list[setting_page.in_modify][0] = self.font45.render(self.letter,
+                                                                                                       True,
+                                                                                                       'white')
+                                setting_page.draw()
+                        if event.key == pygame.K_ESCAPE:
                             setting_page.return_function()
                             self.state = self.state_list[0]
-                            starting_page = Snake_Starting(self)
+                            starting_page = SnakeStarting(self)
                             del setting_page
             if self.state == self.state_list[1] and not gaming_page.in_pause:
                 gaming_page.draw()
                 if gaming_page.death_test():
                     self.state = self.state_list[0]
-                    starting_page = Snake_Starting(self)
+                    starting_page = SnakeStarting(self)
                     starting_page.resize_function()
                     del gaming_page
             pygame.display.flip()
 
 
 if __name__ == '__main__':
-    snake = Snake_Main()
+    snake = SnakeMain()
     snake.loop()
     pygame.quit()
     sys.exit()

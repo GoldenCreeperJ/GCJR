@@ -2,6 +2,8 @@ from Snake import *
 from Sweepmine import *
 
 
+# TODO: 玩家数据持久化存储和显示
+# TODO：适配局域网多人联机
 class Main:
     def __init__(self):
         pygame.init()
@@ -47,10 +49,10 @@ class Main:
 
                 if event.type == pygame.MOUSEBUTTONUP:
                     if pygame.Rect.collidepoint(self.font_list[0][1], event.pos):
-                        snake = Snake_Main()
+                        snake = SnakeMain()
                         snake.loop()
                     elif pygame.Rect.collidepoint(self.font_list[1][1], event.pos):
-                        sweepmine = Sweepmine_Main()
+                        sweepmine = SweepmineMain()
                         sweepmine.loop()
                     self.write_name()
                     self.draw()
