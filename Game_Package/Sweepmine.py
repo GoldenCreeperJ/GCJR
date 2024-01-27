@@ -88,7 +88,7 @@ class SweepmineGaming:
                         for j in (-1, 0, 1):
                             if 0 <= unfold_item[0] + i < self.owner.length and 0 <= unfold_item[
                                 1] + j < self.owner.width and isinstance(
-                                    self.board[unfold_item[1] + j][unfold_item[0] + i], str):
+                                self.board[unfold_item[1] + j][unfold_item[0] + i], str):
                                 unfold_list.append((unfold_item[0] + i, unfold_item[1] + j))
 
     def extend_icon(self, x, y, string):
@@ -237,10 +237,10 @@ class SweepmineSetting:
 
 
 class SweepmineMain:
-    def __init__(self):
+    def __init__(self, screen):
+        self.screen = screen
         pygame.init()
         pygame.display.set_caption('扫雷')
-        self.screen = pygame.display.set_mode((800, 600), flags=pygame.RESIZABLE)
         self.font15 = pygame.font.SysFont(pygame.font.get_fonts()[27], 15)
         self.font45 = pygame.font.SysFont(pygame.font.get_fonts()[27], 45)
         self.text_name = self.font15.render('made by J', True, 'white')

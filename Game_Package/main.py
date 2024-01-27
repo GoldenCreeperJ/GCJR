@@ -49,10 +49,10 @@ class Main:
 
                 if event.type == pygame.MOUSEBUTTONUP:
                     if pygame.Rect.collidepoint(self.font_list[0][1], event.pos):
-                        snake = SnakeMain()
+                        snake = SnakeMain(self.screen)
                         snake.loop()
                     elif pygame.Rect.collidepoint(self.font_list[1][1], event.pos):
-                        sweepmine = SweepmineMain()
+                        sweepmine = SweepmineMain(self.screen)
                         sweepmine.loop()
                     self.write_name()
                     self.draw()

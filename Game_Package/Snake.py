@@ -272,7 +272,7 @@ class SnakeSetting:
 
 
 class SnakeMain:
-    def __init__(self, screen=pygame.display.set_mode((800, 600), flags=pygame.RESIZABLE)):
+    def __init__(self, screen):
         # 初始化
         pygame.init()
         pygame.display.set_caption('贪吃蛇')
